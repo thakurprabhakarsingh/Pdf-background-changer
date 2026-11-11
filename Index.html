@@ -1,0 +1,1030 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080d18">
+
+<title>PDF Notes Cleaner Pro</title>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #080d18;
+    --card: #111a2b;
+    --card2: #172238;
+    --border: #263550;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --primary: #6366f1;
+    --green: #10b981;
+    --red: #ef4444;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    min-height: 100vh;
+}
+
+button, input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+}
+
+.container {
+    width: min(1100px, 94%);
+    margin: auto;
+    padding: 30px 0 50px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    width: 65px;
+    height: 65px;
+    background: linear-gradient(135deg,#6366f1,#a855f7);
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    font-size: 30px;
+    margin: 0 auto 15px;
+}
+
+h1 {
+    font-size: clamp(23px, 5vw, 36px);
+    font-weight: 850;
+    background: linear-gradient(90deg,#818cf8,#c084fc);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 20px;
+}
+
+.upload-area {
+    border: 2px dashed #475569;
+    border-radius: 15px;
+    padding: 40px 15px;
+    text-align: center;
+    transition: .2s;
+}
+
+.upload-area.drag {
+    border-color: var(--primary);
+    background: #6366f115;
+}
+
+.upload-icon {
+    font-size: 42px;
+    margin-bottom: 12px;
+}
+
+.upload-area h2 {
+    font-size: 19px;
+    margin-bottom: 7px;
+}
+
+.upload-area p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 18px;
+}
+
+.btn {
+    padding: 12px 18px;
+    border-radius: 10px;
+    color: white;
+    font-weight: 650;
+    font-size: 13px;
+    transition: .2s;
+}
+
+.btn:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: var(--primary);
+}
+
+.btn-green {
+    background: var(--green);
+}
+
+.btn-gray {
+    background: #334155;
+}
+
+.btn-red {
+    background: #991b1b;
+}
+
+.btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#fileInput {
+    display: none;
+}
+
+#workspace {
+    display: none;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 16px 10px;
+    border-radius: 13px;
+    text-align: center;
+}
+
+.stat strong {
+    display: block;
+    font-size: 23px;
+    color: #a5b4fc;
+}
+
+.stat span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.toolbar h2 {
+    font-size: 18px;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.actions .btn {
+    padding: 10px 13px;
+}
+
+.options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 18px 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.options label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+}
+
+input[type=checkbox] {
+    accent-color: #818cf8;
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+}
+
+.pages-grid {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 15px;
+    max-height: 650px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.page-card {
+    background: #0b1322;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    transition: .2s;
+}
+
+.page-card.selected {
+    border-color: #818cf8;
+}
+
+.page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.page-card canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: white;
+    border-radius: 5px;
+}
+
+.page-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 7px;
+}
+
+.progress-box {
+    display: none;
+    margin-top: 20px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 9px;
+}
+
+.progress-track {
+    height: 9px;
+    background: #263550;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg,#6366f1,#a855f7);
+    transition: width .15s;
+}
+
+.download-section {
+    text-align: center;
+    margin-top: 22px;
+}
+
+.download-section .btn {
+    width: 100%;
+    max-width: 400px;
+    padding: 16px;
+    font-size: 15px;
+}
+
+.message {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    margin-top: 15px;
+}
+
+footer {
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+    padding: 20px 0;
+}
+
+@media(max-width:700px) {
+    .pages-grid {
+        grid-template-columns: repeat(3,1fr);
+    }
+    .toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media(max-width:450px) {
+    .pages-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+    .stats {
+        gap: 7px;
+    }
+    .stat strong {
+        font-size: 19px;
+    }
+    .card {
+        padding: 15px;
+    }
+    .actions {
+        width: 100%;
+    }
+    .actions .btn {
+        flex: 1;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <div class="logo">📄</div>
+    <h1>PDF Notes Cleaner Pro</h1>
+    <p class="subtitle">
+        Invert Background • Remove Pages • Create Clean PDF
+    </p>
+</header>
+
+<!-- Upload -->
+<div class="card">
+
+    <div class="upload-area" id="dropArea">
+
+        <div class="upload-icon">📂</div>
+
+        <h2>Upload Your PDF</h2>
+
+        <p>अपनी Notes PDF यहां चुनें या Drag & Drop करें</p>
+
+        <input type="file" id="fileInput" accept=".pdf,application/pdf">
+
+        <button class="btn btn-primary" id="chooseBtn">
+            + Choose PDF File
+        </button>
+
+        <p id="fileName" style="margin-top:15px;margin-bottom:0">
+            कोई PDF चुनी नहीं गई
+        </p>
+
+    </div>
+</div>
+
+<!-- Workspace -->
+<div id="workspace">
+
+    <!-- Statistics -->
+    <div class="stats">
+
+        <div class="stat">
+            <strong id="totalPages">0</strong>
+            <span>Total Pages</span>
+        </div>
+
+        <div class="stat">
+            <strong id="selectedPages">0</strong>
+            <span>Selected Pages</span>
+        </div>
+
+        <div class="stat">
+            <strong id="removedPages">0</strong>
+            <span>Removed Pages</span>
+        </div>
+
+    </div>
+
+    <!-- Page Manager -->
+    <div class="card">
+
+        <div class="toolbar">
+
+            <h2>📑 Page Manager</h2>
+
+            <div class="actions">
+
+                <button class="btn btn-gray" id="selectAll">
+                    Select All
+                </button>
+
+                <button class="btn btn-gray" id="deselectAll">
+                    Deselect All
+                </button>
+
+                <button class="btn btn-red" id="invertSelection">
+                    Reverse Selection
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="options">
+
+            <label>
+                <input type="checkbox" id="invertColors" checked>
+                Invert PDF Colors
+            </label>
+
+            <label>
+                <input type="checkbox" id="highQuality">
+                High Quality Export
+            </label>
+
+        </div>
+
+        <p class="message" style="margin-bottom:15px">
+            जिन Pages को PDF में रखना है उन्हें Select रखें।
+        </p>
+
+        <div class="pages-grid" id="pagesGrid"></div>
+
+        <div class="download-section">
+
+            <button class="btn btn-green" id="downloadBtn">
+                ✨ Generate & Download PDF
+            </button>
+
+            <p class="message">
+                आपकी PDF आपके Browser में ही Process होगी।
+            </p>
+
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-box" id="progressBox">
+
+            <div class="progress-info">
+                <span id="progressText">Processing...</span>
+                <strong id="progressPercent">0%</strong>
+            </div>
+
+            <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    PDF Notes Cleaner Pro © 2026
+    <br><br>
+    Fast • Secure • Easy to Use
+</footer>
+
+</div>
+
+<script>
+
+// =====================================
+// PDF CONFIGURATION
+// =====================================
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+let pdfDoc = null;
+let total = 0;
+let busy = false;
+let renderToken = 0;
+
+const $ = id => document.getElementById(id);
+
+const fileInput = $('fileInput');
+const dropArea = $('dropArea');
+const pagesGrid = $('pagesGrid');
+
+const workspace = $('workspace');
+
+const chooseBtn = $('chooseBtn');
+const downloadBtn = $('downloadBtn');
+
+
+// =====================================
+// FILE UPLOAD
+// =====================================
+
+chooseBtn.addEventListener('click', () => {
+    if (!busy) fileInput.click();
+});
+
+fileInput.addEventListener('change', e => {
+    loadPDF(e.target.files[0]);
+});
+
+dropArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropArea.classList.add('drag');
+});
+
+dropArea.addEventListener('dragleave', () => {
+    dropArea.classList.remove('drag');
+});
+
+dropArea.addEventListener('drop', e => {
+    e.preventDefault();
+    dropArea.classList.remove('drag');
+
+    const file = e.dataTransfer.files[0];
+
+    if (file) loadPDF(file);
+});
+
+
+// =====================================
+// LOAD PDF
+// =====================================
+
+async function loadPDF(file) {
+
+    if (!file || busy) return;
+
+    if (file.type !== 'application/pdf' &&
+        !file.name.toLowerCase().endsWith('.pdf')) {
+
+        alert('कृपया सही PDF File चुनें।');
+        return;
+    }
+
+    if (file.size > 150 * 1024 * 1024) {
+        alert('PDF बहुत बड़ी है। 150 MB से छोटी PDF चुनें।');
+        return;
+    }
+
+    busy = true;
+    renderToken++;
+
+    $('fileName').textContent = 'Loading: ' + file.name;
+
+    $('fileName').style.color = '#818cf8';
+
+    chooseBtn.disabled = true;
+
+    try {
+
+        const buffer = await file.arrayBuffer();
+
+        const task = pdfjsLib.getDocument({
+            data: new Uint8Array(buffer)
+        });
+
+        pdfDoc = await task.promise;
+
+        total = pdfDoc.numPages;
+
+        $('totalPages').textContent = total;
+
+        workspace.style.display = 'block';
+
+        pagesGrid.innerHTML = '';
+
+        updateStats();
+
+        await renderThumbnails();
+
+        $('fileName').textContent =
+            '✓ ' + file.name + ' (' + total + ' Pages)';
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert('PDF Load Error: ' + error.message);
+
+    } finally {
+
+        busy = false;
+        chooseBtn.disabled = false;
+
+    }
+}
+
+
+// =====================================
+// RENDER PAGE THUMBNAILS
+// =====================================
+
+async function renderThumbnails() {
+
+    const token = renderToken;
+
+    pagesGrid.innerHTML = '';
+
+    for (let i = 1; i <= total; i++) {
+
+        if (token !== renderToken) return;
+
+        const card = document.createElement('div');
+
+        card.className = 'page-card selected';
+
+        card.dataset.page = i;
+
+        const head = document.createElement('div');
+        head.className = 'page-head';
+
+        const label = document.createElement('span');
+        label.textContent = 'PAGE ' + i;
+
+        const checkbox = document.createElement('input');
+
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.className = 'page-checkbox';
+
+        checkbox.addEventListener('change', () => {
+
+            card.classList.toggle('selected', checkbox.checked);
+
+            updateStats();
+
+        });
+
+        head.append(label, checkbox);
+
+        const canvas = document.createElement('canvas');
+
+        const footer = document.createElement('div');
+
+        footer.className = 'page-footer';
+        footer.textContent = 'Page ' + i;
+
+        card.append(head, canvas, footer);
+
+        pagesGrid.appendChild(card);
+
+        // Render sequentially to reduce memory usage
+        try {
+
+            const page = await pdfDoc.getPage(i);
+
+            const viewport = page.getViewport({ scale: 0.30 });
+
+            const context = canvas.getContext('2d', {
+                alpha: false
+            });
+
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport,
+                background: 'rgb(255,255,255)'
+            }).promise;
+
+            if ($('invertColors').checked) {
+                invertCanvas(canvas);
+            }
+
+        } catch (error) {
+
+            console.error('Thumbnail error:', i, error);
+
+            footer.textContent = 'Preview Error';
+
+        }
+
+        // Give browser time to update UI
+        if (i % 5 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+    }
+}
+
+
+// =====================================
+// COLOR INVERSION
+// =====================================
+
+function invertCanvas(canvas) {
+
+    const ctx = canvas.getContext('2d');
+
+    const image = ctx.getImageData(
+        0, 0, canvas.width, canvas.height
+    );
+
+    const pixels = image.data;
+
+    for (let i = 0; i < pixels.length; i += 4) {
+
+        pixels[i] = 255 - pixels[i];
+
+        pixels[i + 1] = 255 - pixels[i + 1];
+
+        pixels[i + 2] = 255 - pixels[i + 2];
+
+    }
+
+    ctx.putImageData(image, 0, 0);
+
+}
+
+
+// =====================================
+// SELECTION CONTROLS
+// =====================================
+
+function getCheckboxes() {
+
+    return [...document.querySelectorAll('.page-checkbox')];
+
+}
+
+function updateStats() {
+
+    const selected = getCheckboxes()
+        .filter(cb => cb.checked).length;
+
+    $('selectedPages').textContent = selected;
+
+    $('removedPages').textContent = total - selected;
+
+    downloadBtn.disabled = selected === 0 || busy;
+
+}
+
+$('selectAll').addEventListener('click', () => {
+
+    getCheckboxes().forEach(cb => {
+
+        cb.checked = true;
+
+        cb.closest('.page-card').classList.add('selected');
+
+    });
+
+    updateStats();
+
+});
+
+
+$('deselectAll').addEventListener('click', () => {
+
+    getCheckboxes().forEach(cb => {
+
+        cb.checked = false;
+
+        cb.closest('.page-card').classList.remove('selected');
+
+    });
+
+    updateStats();
+
+});
+
+
+$('invertSelection').addEventListener('click', () => {
+
+    getCheckboxes().forEach(cb => {
+
+        cb.checked = !cb.checked;
+
+        cb.closest('.page-card')
+            .classList.toggle('selected', cb.checked);
+
+    });
+
+    updateStats();
+
+});
+
+
+// =====================================
+// COLOR PREVIEW TOGGLE
+// =====================================
+
+$('invertColors').addEventListener('change', async () => {
+
+    if (!pdfDoc || busy) return;
+
+    busy = true;
+    chooseBtn.disabled = true;
+
+    try {
+
+        await renderThumbnails();
+
+    } finally {
+
+        busy = false;
+        chooseBtn.disabled = false;
+
+        updateStats();
+
+    }
+
+});
+
+
+// =====================================
+// PROGRESS BAR
+// =====================================
+
+function updateProgress(current, maximum) {
+
+    const percent = Math.round((current / maximum) * 100);
+
+    $('progressBar').style.width = percent + '%';
+
+    $('progressPercent').textContent = percent + '%';
+
+    $('progressText').textContent =
+        'Processing page ' + current + ' of ' + maximum;
+
+}
+
+
+// =====================================
+// PDF EXPORT
+// =====================================
+
+downloadBtn.addEventListener('click', exportPDF);
+
+async function exportPDF() {
+
+    if (!pdfDoc || busy) return;
+
+    const selected = getCheckboxes()
+        .filter(cb => cb.checked)
+        .map(cb => Number(cb.closest('.page-card').dataset.page));
+
+    if (selected.length === 0) {
+
+        alert('कम से कम एक Page Select करें।');
+
+        return;
+
+    }
+
+    busy = true;
+
+    downloadBtn.disabled = true;
+    chooseBtn.disabled = true;
+
+    $('progressBox').style.display = 'block';
+
+    $('progressBar').style.width = '0%';
+
+    try {
+
+        const { jsPDF } = window.jspdf;
+
+        let output = null;
+
+        const invert = $('invertColors').checked;
+
+        // Quality settings
+        const scale = $('highQuality').checked ? 2 : 1.25;
+
+        const jpegQuality = $('highQuality').checked ? 0.95 : 0.82;
+
+        for (let index = 0; index < selected.length; index++) {
+
+            const pageNumber = selected[index];
+
+            const page = await pdfDoc.getPage(pageNumber);
+
+            const viewport = page.getViewport({
+                scale: scale
+            });
+
+            const canvas = document.createElement('canvas');
+
+            const context = canvas.getContext('2d', {
+                alpha: false
+            });
+
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport,
+                background: 'rgb(255,255,255)'
+            }).promise;
+
+            // Invert colors when enabled
+            if (invert) {
+                invertCanvas(canvas);
+            }
+
+            const imageData = canvas.toDataURL(
+                'image/jpeg',
+                jpegQuality
+            );
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            const orientation =
+                width > height ? 'landscape' : 'portrait';
+
+            if (index === 0) {
+
+                output = new jsPDF({
+                    orientation: orientation,
+                    unit: 'px',
+                    format: [width, height],
+                    compress: true,
+                    hotfixes: ['px_scaling']
+                });
+
+            } else {
+
+                output.addPage(
+                    [width, height],
+                    orientation
+                );
+
+            }
+
+            output.addImage(
+                imageData,
+                'JPEG',
+                0,
+                0,
+                width,
+                height,
+                undefined,
+                'FAST'
+            );
+
+            updateProgress(index + 1, selected.length);
+
+            // Allow UI updates between pages
+            canvas.width = 0;
+            canvas.height = 0;
+
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+        }
+
+        // Download
+        output.save('Clean-Notes-PDF.pdf');
+
+        $('progressText').textContent = 'PDF Downloaded Successfully!';
+
+        $('progressPercent').textContent = '100%';
+
+        alert('आपकी Clean PDF तैयार है!');
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert('PDF बनाने में Error: ' + error.message);
+
+    } finally {
+
+        busy = false;
+
+        downloadBtn.disabled = false;
+        chooseBtn.disabled = false;
+
+        updateStats();
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
